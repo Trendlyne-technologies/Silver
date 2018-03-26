@@ -205,7 +205,8 @@ class SubscriptionAdmin(ModelAdmin):
 
     def perform_action(self, request, action, queryset):
         try:
-            method = getattr(Subscription, action)
+            # method = getattr(Subscription, action)
+            method = getattr(self.model, action)
         except AttributeError:
             self.message_user(request, 'Illegal action.', level=messages.ERROR)
             return
@@ -989,7 +990,8 @@ class TransactionAdmin(ModelAdmin):
             self.message_user(request, 'Illegal action.', level=messages.ERROR)
             return
 
-        method = getattr(Transaction, action)
+        # method = getattr(Transaction, action)
+        method = getattr(self.form._meta.model, action)
 
         for transaction in queryset:
             try:
