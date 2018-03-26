@@ -38,7 +38,8 @@ class Customer(BaseBillingEntity):
     )
     last_name = models.CharField(
         max_length=128,
-        help_text='The customer\'s last name.'
+        help_text='The customer\'s last name.',
+        blank=True,null=True
     )
 
     payment_due_days = models.PositiveIntegerField(
