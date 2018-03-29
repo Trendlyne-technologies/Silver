@@ -1,0 +1,7 @@
+find . -name "*.py" > cscope.files
+find . -name "*.html" >> cscope.files
+find . -name "*.css" ! -name *min.css >> cscope.files
+find . -name "*.js" ! -name *min.js >> cscope.files
+cscope -b
+ctags -L cscope.files
+
