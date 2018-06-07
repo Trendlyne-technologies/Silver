@@ -9,7 +9,7 @@ django-fsm>=2.3.0
 django-filter==1.0.4
 djangorestframework-bulk<0.3
 django-livefield
-django-jsonfield==1.0.1
+jsonfield==2.0.2
 python-dateutil
 django-model-utils
 django-annoying
