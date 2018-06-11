@@ -11,7 +11,8 @@ djangorestframework-bulk<0.3
 django-livefield
 #never change below django-jsonfield version as polymorphic support is in this commit only.
 #reference: SPmetadata issue in MF model as it is derived from Stockprofile
-git+https://github.com/nimbis/django-jsonfield.git@b5195837b74ccd9475f855d9379c9ed7507c0cbd
+#now moved to setup.py
+#git+https://github.com/nimbis/django-jsonfield.git@b5195837b74ccd9475f855d9379c9ed7507c0cbd
 python-dateutil
 django-model-utils
 django-annoying
