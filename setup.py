@@ -75,7 +75,7 @@ setup(
     },
     include_package_data=True,
     install_requires=install_requires,
-    dependency_links = ['git+https://github.com/nimbis/django-jsonfield.git@b5195837b74ccd9475f855d9379c9ed7507c0cbd']
+    dependency_links = ['git+https://github.com/nimbis/django-jsonfield.git@b5195837b74ccd9475f855d9379c9ed7507c0cbd'],
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django :: 1.8',
