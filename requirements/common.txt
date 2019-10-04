@@ -14,8 +14,8 @@ django-livefield
 #now moved to setup.py
 #git+https://github.com/nimbis/django-jsonfield.git@b5195837b74ccd9475f855d9379c9ed7507c0cbd
 python-dateutil
-django-model-utils
-django-annoying
+django-model-utils==3.1.2
+django-annoying==0.10.4
 pytz
 PyJWT
 
@@ -27,7 +27,7 @@ pyvat
 PyPDF2
 furl
 
-cryptography==2.1.3
+cryptography==2.7
 sqlparse==0.2.2
 django-autocomplete-light==3.2.9
 celery[redis]
