@@ -105,11 +105,11 @@ class Plan(models.Model):
     private = models.BooleanField(default=False,
                                   help_text='Indicates if a plan is private.')
     product_code = models.ForeignKey(
-        'ProductCode', help_text='The product code for this plan.'
+        'ProductCode', help_text='The product code for this plan.', on_delete=models.CASCADE
     )
     provider = models.ForeignKey(
         'Provider', related_name='plans',
-        help_text='The provider which provides the plan.'
+        help_text='The provider which provides the plan.', on_delete=models.CASCADE
     )
 
     class Meta:
@@ -155,7 +155,7 @@ class MeteredFeature(models.Model):
         help_text='The number of included units during the trial period.'
     )
     product_code = UnsavedForeignKey(
-        'ProductCode', help_text='The product code for this plan.'
+        'ProductCode', help_text='The product code for this plan.', on_delete=models.CASCADE
     )
 
     class Meta:

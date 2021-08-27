@@ -25,10 +25,10 @@ from silver.views import (pay_transaction_view, complete_payment_view,
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^admin/', include(admin.site.urls)),
-    url(r'^api-auth/', include('rest_framework.urls',
+    url(r'^admin/', include((admin.site.urls, "admin"))),
+    url(r'^api-auth/', include(('rest_framework.urls', "rest_framework"),
                                namespace='rest_framework')),
-    url(r'', include('silver.api.urls')),
+    url(r'', include(('silver.api.urls', "silver"))),
 
     url(r'pay/(?P<token>[0-9a-zA-Z-_\.]+)/$',
         pay_transaction_view, name='payment'),

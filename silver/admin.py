@@ -23,7 +23,6 @@ from PyPDF2 import PdfFileReader, PdfFileMerger
 from dal import autocomplete
 
 from django import forms
-from django.core import urlresolvers
 from django.contrib import messages
 from django.contrib.admin import (helpers, site, TabularInline, ModelAdmin,
                                   SimpleListFilter)
@@ -36,7 +35,7 @@ from django.db.models import BLANK_CHOICE_DASH
 from django.forms import ChoiceField
 from django.utils.html import escape
 from django_fsm import TransitionNotAllowed
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from django.shortcuts import render
@@ -46,11 +45,11 @@ from silver.utils.international import currencies
 from silver.utils.payments import get_payment_url
 from silver.payment_processors.mixins import PaymentProcessorTypes
 
-from models import (Plan, MeteredFeature, Subscription, Customer, Provider,
+from .models import (Plan, MeteredFeature, Subscription, Customer, Provider,
                     MeteredFeatureUnitsLog, Invoice, DocumentEntry,
                     ProductCode, Proforma, BillingLog, BillingDocumentBase,
                     Transaction, PaymentMethod)
-from documents_generator import DocumentsGenerator
+from .documents_generator import DocumentsGenerator
 
 
 logger = logging.getLogger('silver')
@@ -964,7 +963,7 @@ class TransactionAdmin(ModelAdmin):
     get_pay_url.short_description = 'Pay URL'
 
     def get_customer(self, obj):
-        link = urlresolvers.reverse("admin:silver_customer_change",
+        link = reverse("admin:silver_customer_change",
                                     args=[obj.payment_method.customer.pk])
         return u'<a href="%s">%s</a>' % (link, obj.payment_method.customer)
     get_customer.allow_tags = True
@@ -976,7 +975,7 @@ class TransactionAdmin(ModelAdmin):
     get_is_recurring.short_description = 'Recurring'
 
     def get_payment_method(self, obj):
-        link = urlresolvers.reverse("admin:silver_paymentmethod_change",
+        link = reverse("admin:silver_paymentmethod_change",
                                     args=[obj.payment_method.pk])
         return u'<a href="%s">%s</a>' % (link, obj.payment_method)
     get_payment_method.allow_tags = True
