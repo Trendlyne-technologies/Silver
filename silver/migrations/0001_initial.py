@@ -314,7 +314,7 @@ class Migration(migrations.Migration):
             name='product_code',
             field=models.OneToOneField(
                 to='silver.ProductCode',
-                help_text=b'The product code for this plan.'),
+                help_text=b'The product code for this plan.', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='plan',
