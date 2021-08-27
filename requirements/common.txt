@@ -2,20 +2,20 @@
 # dependency==x.x  # we really need this
 # DON'T do it the file will be parsed on deploy
 
-django<2.0
-djangorestframework==3.6.3
+django>=2.0
+djangorestframework>=3.6.3
 pycountry>=16.11.08
 django-fsm>=2.3.0
-django-filter==1.0.4
-djangorestframework-bulk<0.3
+django-filter>=1.0.4
+djangorestframework-bulk>=0.3
 django-livefield
 #never change below django-jsonfield version as polymorphic support is in this commit only.
 #reference: SPmetadata issue in MF model as it is derived from Stockprofile
 #now moved to setup.py
 #git+https://github.com/nimbis/django-jsonfield.git@b5195837b74ccd9475f855d9379c9ed7507c0cbd
 python-dateutil
-django-model-utils==3.1.2
-django-annoying==0.10.4
+django-model-utils>=3.1.2
+django-annoying>=0.10.4
 pytz
 PyJWT
 
@@ -27,7 +27,7 @@ pyvat
 PyPDF2
 furl
 
-cryptography==2.7
-sqlparse==0.2.2
-django-autocomplete-light==3.2.9
+cryptography>=2.7
+sqlparse>=0.2.2
+django-autocomplete-light>=3.2.9
 celery[redis]
