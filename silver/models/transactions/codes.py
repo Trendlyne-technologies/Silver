@@ -54,7 +54,7 @@ FAIL_CODES = {
         'message': 'The tranasction has been declined by the payment processor.',
         'solve_message': 'Use another payment method.'
     },
-    'transaction_hard_declined_by_bank': {
+    'transaction_hard_declined_by_bnk': {
         'message': 'Your bank has declined the transaction.',
         'solve_message': 'Contact your bank or use another payment method.'
     }
