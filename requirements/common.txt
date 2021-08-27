@@ -7,7 +7,7 @@ djangorestframework>=3.6.3
 pycountry>=16.11.08
 django-fsm>=2.3.0
 django-filter>=1.0.4
-djangorestframework-bulk>=0.3
+djangorestframework>=3.12
 django-livefield
 #never change below django-jsonfield version as polymorphic support is in this commit only.
 #reference: SPmetadata issue in MF model as it is derived from Stockprofile
