@@ -3,11 +3,10 @@
 # DON'T do it the file will be parsed on deploy
 
 django>=2.0
-djangorestframework>=3.6.3
 pycountry>=16.11.08
 django-fsm>=2.3.0
 django-filter>=1.0.4
-djangorestframework>=3.12
+djangorestframework>=3.11.2
 django-livefield
 #never change below django-jsonfield version as polymorphic support is in this commit only.
 #reference: SPmetadata issue in MF model as it is derived from Stockprofile
