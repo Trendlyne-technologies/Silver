@@ -64,8 +64,10 @@ class PDF(Model):
 
     def mark_as_dirty(self):
         with transaction.atomic():
-            PDF.objects.filter(id=self.id).update(dirty=F('dirty') + 1)
-            self.refresh_from_db(fields=['dirty'])
+            # PDF.objects.filter(id=self.id).update(dirty=F('dirty') + 1)
+            #self.refresh_from_db(fields=['dirty'])
+            self.dirty = self.dirty + 1
+            self.save()
 
     def mark_as_clean(self):
         PDF.objects.filter(id=self.id).update(dirty=F('dirty') - self.dirty)
