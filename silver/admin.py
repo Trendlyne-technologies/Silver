@@ -34,6 +34,7 @@ from django.db import connections
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import ChoiceField
 from django.utils.html import escape, format_html
+from django.utils.safestring import mark_safe
 from django_fsm import TransitionNotAllowed
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -61,7 +62,7 @@ def metadata(obj):
         d = u''
         for key, value in obj.meta.items():
             d += u'%s: <code>%s</code><br>' % (escape(key), escape(value))
-    return format_html(d)
+    return mark_safe(d)
 metadata.allow_tags = True
 
 
