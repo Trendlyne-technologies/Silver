@@ -295,8 +295,8 @@ class Transaction(models.Model):
                 not self.document.amount_to_be_charged_in_transaction_currency):
             self.document.pay()
 
-    def __unicode__(self):
-        return unicode(self.uuid)
+    def __str__(self):
+        return self.uuid
 
 
 @receiver(post_transition)

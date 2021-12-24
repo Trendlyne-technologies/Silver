@@ -110,8 +110,8 @@ class MeteredFeatureUnitsLog(models.Model):
 
             super(MeteredFeatureUnitsLog, self).save(*args, **kwargs)
 
-    def __unicode__(self):
-        return unicode(self.metered_feature.name)
+    def __str__(self):
+        return self.metered_feature.name
 
 
 class Subscription(models.Model):
@@ -994,8 +994,8 @@ class Subscription(models.Model):
         base_context.update(context)
         return base_context
 
-    def __unicode__(self):
-        return u'%s (%s)' % (self.customer, self.plan)
+    def __str__(self):
+        return '%s (%s)' % (self.customer, self.plan)
 
 
 class BillingLog(models.Model):
@@ -1023,8 +1023,8 @@ class BillingLog(models.Model):
     class Meta:
         ordering = ['-billing_date']
 
-    def __unicode__(self):
-        return u'{sub} - {pro} - {inv} - {date}'.format(
+    def __str__(self):
+        return '{sub} - {pro} - {inv} - {date}'.format(
             sub=self.subscription, pro=self.proforma,
             inv=self.invoice, date=self.billing_date)
 

@@ -99,8 +99,8 @@ class DocumentEntry(models.Model):
             prorated=self.prorated
         )
 
-    def __unicode__(self):
-        s = u'{descr} - {unit} - {unit_price} - {quantity} - {product_code}'
+    def __str__(self):
+        s = '{descr} - {unit} - {unit_price} - {quantity} - {product_code}'
         return s.format(
             descr=self.description,
             unit=self.unit,

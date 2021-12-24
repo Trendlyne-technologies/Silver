@@ -183,7 +183,7 @@ class PaymentMethod(models.Model):
     def public_data(self):
         return {}
 
-    def __unicode__(self):
+    def __str__(self):
         return u'{} - {}'.format(self.customer,
                                  self.get_payment_processor_display())
 
