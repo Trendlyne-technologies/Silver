@@ -33,7 +33,7 @@ from django.core.exceptions import ValidationError
 from django.db import connections
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import ChoiceField
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 from django_fsm import TransitionNotAllowed
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -59,7 +59,7 @@ def metadata(obj):
     d = u'(None)'
     if obj.meta:
         d = u''
-        for key, value in obj.meta.iteritems():
+        for key, value in obj.meta.items():
             d += u'%s: <code>%s</code><br>' % (escape(key), escape(value))
     return d
 metadata.allow_tags = True
@@ -818,7 +818,7 @@ class InvoiceAdmin(BillingDocumentAdmin):
     def invoice_pdf(self, invoice):
         if invoice.pdf:
             url = reverse('invoice-pdf', kwargs={'invoice_id': invoice.id})
-            return '<a href="{url}" target="_blank">{url}</a>'.format(url=url)
+            return format_html('<a href="{url}" target="_blank">{url}</a>'.format(url=url))
         else:
             return None
     invoice_pdf.allow_tags = True
@@ -871,7 +871,7 @@ class ProformaAdmin(BillingDocumentAdmin):
     def proforma_pdf(self, proforma):
         if proforma.pdf:
             url = reverse('proforma-pdf', kwargs={'proforma_id': proforma.id})
-            return '<a href="{url}" target="_blank">{url}</a>'.format(url=url)
+            return format_html('<a href="{url}" target="_blank">{url}</a>'.format(url=url))
         else:
             return None
     proforma_pdf.allow_tags = True
@@ -956,8 +956,8 @@ class TransactionAdmin(ModelAdmin):
         return self.form.Meta.readonly_fields
 
     def get_pay_url(self, obj):
-        return u'<a href="%s">%s</a>' % (get_payment_url(obj, None),
-                                         obj.payment_processor)
+        return format_html('<a href="%s">%s</a>' % (get_payment_url(obj, None),
+                                         obj.payment_processor))
 
     get_pay_url.allow_tags = True
     get_pay_url.short_description = 'Pay URL'
@@ -965,7 +965,7 @@ class TransactionAdmin(ModelAdmin):
     def get_customer(self, obj):
         link = reverse("admin:silver_customer_change",
                                     args=[obj.payment_method.customer.pk])
-        return u'<a href="%s">%s</a>' % (link, obj.payment_method.customer)
+        return format_html('<a href="%s">%s</a>' % (link, obj.payment_method.customer))
     get_customer.allow_tags = True
     get_customer.short_description = 'Customer'
 
@@ -977,7 +977,7 @@ class TransactionAdmin(ModelAdmin):
     def get_payment_method(self, obj):
         link = reverse("admin:silver_paymentmethod_change",
                                     args=[obj.payment_method.pk])
-        return u'<a href="%s">%s</a>' % (link, obj.payment_method)
+        return format_html('<a href="%s">%s</a>' % (link, obj.payment_method))
     get_payment_method.allow_tags = True
     get_payment_method.short_description = 'Payment Method'
 
@@ -1102,7 +1102,7 @@ class TransactionAdmin(ModelAdmin):
     related_invoice.short_description = 'Invoice'
 
     def related_proforma(self, obj):
-        return obj.proforma.admin_change_url if obj.proforma else None
+        return format_html(obj.proforma.admin_change_url) if obj.proforma else None
     related_proforma.allow_tags = True
     related_proforma.short_description = 'Proforma'
 

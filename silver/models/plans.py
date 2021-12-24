@@ -127,7 +127,7 @@ class Plan(models.Model):
             product_codes[mf.product_code.value] = mf.name
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     @property
     def provider_flow(self):
