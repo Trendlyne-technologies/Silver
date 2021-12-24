@@ -61,7 +61,7 @@ def metadata(obj):
         d = u''
         for key, value in obj.meta.items():
             d += u'%s: <code>%s</code><br>' % (escape(key), escape(value))
-    return d
+    return format_html(d)
 metadata.allow_tags = True
 
 
@@ -137,7 +137,7 @@ class PlanAdmin(ModelAdmin):
             if f.included_units > 0:
                 d += u'<code> ({:.2f} included)</code>'.format(f.included_units)
             d += u'<br>'
-        return d
+        return format_html(d)
     description.allow_tags = True
 
 
@@ -178,12 +178,12 @@ class BillingLogInLine(TabularInline):
         return False
 
     def invoice_link(self, obj):
-        return obj.invoice.admin_change_url if obj.invoice else 'None'
+        return format_html(obj.invoice.admin_change_url) if obj.invoice else 'None'
     invoice_link.short_description = 'Invoice'
     invoice_link.allow_tags = True
 
     def proforma_link(self, obj):
-        return obj.proforma.admin_change_url if obj.proforma else 'None'
+        return format_html(obj.proforma.admin_change_url) if obj.proforma else 'None'
     proforma_link.short_description = 'Proforma'
     proforma_link.allow_tags = True
 
@@ -779,7 +779,7 @@ class BillingDocumentAdmin(ModelAdmin):
     download_selected_documents.short_description = 'Download selected documents'
 
     def get_related_document(self, obj):
-        return obj.related_document.admin_change_url if obj.related_document else None
+        return format_html(obj.related_document.admin_change_url) if obj.related_document else None
     get_related_document.short_description = 'Related document'
     get_related_document.allow_tags = True
 
@@ -817,7 +817,7 @@ class InvoiceAdmin(BillingDocumentAdmin):
 
     def invoice_pdf(self, invoice):
         if invoice.pdf:
-            url = reverse('invoice-pdf', kwargs={'invoice_id': invoice.id})
+            url = reverse('silver:invoice-pdf', kwargs={'invoice_id': invoice.id})
             return format_html('<a href="{url}" target="_blank">{url}</a>'.format(url=url))
         else:
             return None
@@ -870,7 +870,7 @@ class ProformaAdmin(BillingDocumentAdmin):
 
     def proforma_pdf(self, proforma):
         if proforma.pdf:
-            url = reverse('proforma-pdf', kwargs={'proforma_id': proforma.id})
+            url = reverse('silver:proforma-pdf', kwargs={'proforma_id': proforma.id})
             return format_html('<a href="{url}" target="_blank">{url}</a>'.format(url=url))
         else:
             return None
@@ -1097,7 +1097,7 @@ class TransactionAdmin(ModelAdmin):
     fail.short_description = 'Fail the selected transactions'
 
     def related_invoice(self, obj):
-        return obj.invoice.admin_change_url if obj.invoice else None
+        return format_html(obj.invoice.admin_change_url) if obj.invoice else None
     related_invoice.allow_tags = True
     related_invoice.short_description = 'Invoice'
 
