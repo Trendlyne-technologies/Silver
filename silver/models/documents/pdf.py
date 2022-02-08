@@ -58,7 +58,7 @@ class PDF(Model):
     def upload(self, pdf_file_object, filename):
         # the PDF's upload_path attribute needs to be set before calling this method
 
-        pdf_content = ContentFile(pdf_file_object)
+        pdf_content = ContentFile(pdf_file_object.content)
 
         self.pdf_file.save(filename, pdf_content, True)
 
