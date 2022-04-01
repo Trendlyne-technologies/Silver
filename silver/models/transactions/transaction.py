@@ -40,7 +40,7 @@ from .codes import FAIL_CODES, REFUND_CODES, CANCEL_CODES
 logger = logging.getLogger(__name__)
 
 
-class Transaction(models.Model):
+class AbstractTransaction(models.Model):
     _provider = None
 
     amount = models.DecimalField(
@@ -54,6 +54,7 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ['-id']
+        abstract = True
 
     class States:
         Initial = 'initial'
@@ -116,7 +117,7 @@ class Transaction(models.Model):
     def __init__(self, *args, **kwargs):
         self.form_class = kwargs.pop('form_class', None)
 
-        super(Transaction, self).__init__(*args, **kwargs)
+        super(AbstractTransaction, self).__init__(*args, **kwargs)
 
     @transition(field=state, source=States.Initial, target=States.Pending)
     def process(self):
@@ -163,7 +164,7 @@ class Transaction(models.Model):
         if not getattr(self, '.cleaned', False):
             self.full_clean(previous_instance=previous_instance)
 
-        super(Transaction, self).save(*args, **kwargs)
+        super(AbstractTransaction, self).save(*args, **kwargs)
 
     def clean(self):
         # Validate documents
@@ -241,7 +242,7 @@ class Transaction(models.Model):
 
         previous_instance = kwargs.pop('previous_instance', None)
 
-        super(Transaction, self).full_clean(*args, **kwargs)
+        super(AbstractTransaction, self).full_clean(*args, **kwargs)
 
         self.clean_with_previous_instance(previous_instance)
 
@@ -297,6 +298,10 @@ class Transaction(models.Model):
 
     def __str__(self):
         return str(self.uuid)
+
+
+class Transaction(AbstractTransaction):
+    pass
 
 
 @receiver(post_transition)

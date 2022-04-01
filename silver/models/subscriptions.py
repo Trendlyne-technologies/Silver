@@ -57,7 +57,7 @@ def field_template_path(field, provider=None):
     return 'billing_documents/{field}.html'.format(field=field)
 
 
-class MeteredFeatureUnitsLog(models.Model):
+class AbstractMeteredFeatureUnitsLog(models.Model):
     metered_feature = models.ForeignKey('MeteredFeature', related_name='consumed', on_delete=models.CASCADE)
     subscription = models.ForeignKey('Subscription', related_name='mf_log_entries', on_delete=models.CASCADE)
     consumed_units = models.DecimalField(max_digits=19, decimal_places=4,
@@ -68,9 +68,10 @@ class MeteredFeatureUnitsLog(models.Model):
     class Meta:
         unique_together = ('metered_feature', 'subscription', 'start_date',
                            'end_date')
+        abstract = True
 
     def clean(self):
-        super(MeteredFeatureUnitsLog, self).clean()
+        super(AbstractMeteredFeatureUnitsLog, self).clean()
         if self.subscription.state in [Subscription.STATES.ENDED,
                                        Subscription.STATES.INACTIVE]:
             if not self.id:
@@ -99,7 +100,7 @@ class MeteredFeatureUnitsLog(models.Model):
                 self.start_date = self.subscription.bucket_start_date()
             if not self.end_date:
                 self.end_date = self.subscription.bucket_end_date()
-            super(MeteredFeatureUnitsLog, self).save(*args, **kwargs)
+            super(AbstractMeteredFeatureUnitsLog, self).save(*args, **kwargs)
 
         else:
             update_fields = []
@@ -108,13 +109,17 @@ class MeteredFeatureUnitsLog(models.Model):
                     update_fields.append(field.name)
             kwargs['update_fields'] = kwargs.get('update_fields', update_fields)
 
-            super(MeteredFeatureUnitsLog, self).save(*args, **kwargs)
+            super(AbstractMeteredFeatureUnitsLog, self).save(*args, **kwargs)
 
     def __str__(self):
         return str(self.metered_feature.name)
 
 
-class Subscription(models.Model):
+class MeteredFeatureUnitsLog(AbstractMeteredFeatureUnitsLog):
+    pass
+
+
+class AbstractSubscription(models.Model):
     class STATES(object):
         ACTIVE = 'active'
         INACTIVE = 'inactive'
@@ -997,8 +1002,15 @@ class Subscription(models.Model):
     def __str__(self):
         return '%s (%s)' % (self.customer, self.plan)
 
+    class Meta:
+        abstract = True
 
-class BillingLog(models.Model):
+
+class Subscription(AbstractSubscription):
+    pass
+
+
+class AbstractBillingLog(models.Model):
     subscription = models.ForeignKey('Subscription',
                                      related_name='billing_logs', on_delete=models.CASCADE)
     invoice = models.ForeignKey('BillingDocumentBase', null=True, blank=True,
@@ -1022,11 +1034,16 @@ class BillingLog(models.Model):
 
     class Meta:
         ordering = ['-billing_date']
+        abstract = True
 
     def __str__(self):
         return '{sub} - {pro} - {inv} - {date}'.format(
             sub=self.subscription, pro=self.proforma,
             inv=self.invoice, date=self.billing_date)
+
+
+class BillingLog(AbstractBillingLog):
+    pass
 
 
 @receiver(pre_delete, sender=Customer)

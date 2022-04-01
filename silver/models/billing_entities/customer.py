@@ -27,10 +27,11 @@ from silver.validators import validate_reference
 PAYMENT_DUE_DAYS = getattr(settings, 'SILVER_DEFAULT_DUE_DAYS', 5)
 
 
-class Customer(BaseBillingEntity):
+class AbstractCustomer(BaseBillingEntity):
     class Meta:
         index_together = (('first_name', 'last_name', 'company'),)
         ordering = ['first_name', 'last_name', 'company']
+        abstract = True
 
     first_name = models.CharField(
         max_length=128,
@@ -73,7 +74,7 @@ class Customer(BaseBillingEntity):
     )
 
     def __init__(self, *args, **kwargs):
-        super(Customer, self).__init__(*args, **kwargs)
+        super(AbstractCustomer, self).__init__(*args, **kwargs)
         company_field = self._meta.get_field("company")
         company_field.help_text = "The company to which the bill is issued."
 
@@ -86,7 +87,7 @@ class Customer(BaseBillingEntity):
             )
 
     def get_archivable_field_values(self):
-        base_fields = super(Customer, self).get_archivable_field_values()
+        base_fields = super(AbstractCustomer, self).get_archivable_field_values()
         customer_fields = ['first_name', 'last_name', 'customer_reference', 'consolidated_billing',
                            'payment_due_days', 'sales_tax_number', 'sales_tax_percent']
         fields_dict = {field: getattr(self, field, '') for field in
@@ -97,3 +98,7 @@ class Customer(BaseBillingEntity):
     @property
     def name(self):
         return "%s %s" % (self.first_name, self.last_name)
+
+
+class Customer(AbstractCustomer):
+    pass

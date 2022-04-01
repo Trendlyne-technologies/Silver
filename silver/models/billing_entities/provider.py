@@ -29,7 +29,7 @@ from .base import BaseBillingEntity
 PAYMENT_DUE_DAYS = getattr(settings, 'SILVER_DEFAULT_DUE_DAYS', 5)
 
 
-class Provider(BaseBillingEntity):
+class AbstractProvider(BaseBillingEntity):
     class FLOWS(object):
         PROFORMA = 'proforma'
         INVOICE = 'invoice'
@@ -51,6 +51,7 @@ class Provider(BaseBillingEntity):
     class Meta:
         index_together = (('name', 'company'),)
         ordering = ['name', 'company']
+        abstract = True
 
     name = models.CharField(
         max_length=128,
@@ -106,7 +107,7 @@ class Provider(BaseBillingEntity):
     )
 
     def __init__(self, *args, **kwargs):
-        super(Provider, self).__init__(*args, **kwargs)
+        super(AbstractProvider, self).__init__(*args, **kwargs)
         company_field = self._meta.get_field("company")
         company_field.help_text = "The provider issuing the invoice."
 
@@ -131,7 +132,7 @@ class Provider(BaseBillingEntity):
                 raise ValidationError(errors)
 
     def get_archivable_field_values(self):
-        base_fields = super(Provider, self).get_archivable_field_values()
+        base_fields = super(AbstractProvider, self).get_archivable_field_values()
         provider_fields = ['name']
         fields_dict = {field: getattr(self, field, '') for field in provider_fields}
         base_fields.update(fields_dict)
@@ -146,6 +147,10 @@ class Provider(BaseBillingEntity):
         base_fields = self.get_archivable_field_values()
         base_fields.update({'proforma_series': getattr(self, 'proforma_series', '')})
         return base_fields
+
+
+class Provider(AbstractProvider):
+    pass
 
 
 @receiver(pre_save, sender=Provider)

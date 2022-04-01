@@ -28,7 +28,7 @@ class PlanManager(models.Manager):
         return super(PlanManager, self).get_queryset().select_related('product_code')
 
 
-class Plan(models.Model):
+class AbstractPlan(models.Model):
     objects = PlanManager()
 
     class INTERVALS(object):
@@ -114,6 +114,7 @@ class Plan(models.Model):
 
     class Meta:
         ordering = ('name',)
+        abstract = True
 
     @staticmethod
     def validate_metered_features(metered_features):
@@ -134,7 +135,11 @@ class Plan(models.Model):
         return self.provider.flow
 
 
-class MeteredFeature(models.Model):
+class Plan(AbstractPlan):
+    pass
+
+
+class AbstractMeteredFeature(models.Model):
     name = models.CharField(
         max_length=200,
         help_text='The feature display name.',
@@ -160,8 +165,13 @@ class MeteredFeature(models.Model):
 
     class Meta:
         ordering = ('name',)
+        abstract = True
 
     def __str__(self):
         fmt = u'{name} ({price:.2f}$, {included:.2f} included)'
         return fmt.format(name=self.name, price=self.price_per_unit,
                           included=self.included_units)
+
+
+class MeteredFeature(AbstractMeteredFeature):
+    pass

@@ -25,7 +25,7 @@ def get_upload_path(instance, filename):
     return instance.upload_path
 
 
-class PDF(Model):
+class AbstractPDF(Model):
     uuid = UUIDField(default=uuid.uuid4, unique=True)
     pdf_file = FileField(null=True, blank=True, editable=False,
                          storage=get_storage(), upload_to=get_upload_path)
@@ -71,3 +71,10 @@ class PDF(Model):
 
     def mark_as_clean(self):
         PDF.objects.filter(id=self.id).update(dirty=F('dirty') - self.dirty)
+
+    class Meta:
+        abstract = True
+
+
+class PDF(AbstractPDF):
+    pass

@@ -19,7 +19,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 
-class DocumentEntry(models.Model):
+class AbstractDocumentEntry(models.Model):
     description = models.CharField(max_length=1024)
     unit = models.CharField(max_length=1024, blank=True, null=True)
     quantity = models.DecimalField(max_digits=19, decimal_places=4,
@@ -38,6 +38,7 @@ class DocumentEntry(models.Model):
     class Meta:
         verbose_name = 'Entry'
         verbose_name_plural = 'Entries'
+        abstract = True
 
     @property
     def document(self):
@@ -108,3 +109,7 @@ class DocumentEntry(models.Model):
             quantity=self.quantity,
             product_code=self.product_code
         )
+
+
+class DocumentEntry(AbstractDocumentEntry):
+    pass
