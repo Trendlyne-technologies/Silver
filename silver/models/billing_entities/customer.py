@@ -29,7 +29,6 @@ PAYMENT_DUE_DAYS = getattr(settings, 'SILVER_DEFAULT_DUE_DAYS', 5)
 
 class AbstractCustomer(BaseBillingEntity):
     class Meta:
-        index_together = (('first_name', 'last_name', 'company'),)
         ordering = ['first_name', 'last_name', 'company']
         abstract = True
 
@@ -101,4 +100,6 @@ class AbstractCustomer(BaseBillingEntity):
 
 
 class Customer(AbstractCustomer):
-    pass
+
+    class Meta:
+        index_together = (('first_name', 'last_name', 'company'),)
