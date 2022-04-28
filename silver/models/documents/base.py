@@ -14,6 +14,7 @@
 
 
 import logging
+from abc import ABC
 from decimal import Decimal
 from datetime import datetime, timedelta
 
@@ -106,7 +107,7 @@ def get_billing_documents_kinds():
             for subclass in BillingDocumentBase.__subclasses__())
 
 
-class BillingDocumentBase(models.Model):
+class AbstractBillingDocumentBase(models.Model):
     objects = BillingDocumentManager.from_queryset(BillingDocumentQuerySet)()
 
     class STATES(object):
@@ -586,6 +587,10 @@ class BillingDocumentBase(models.Model):
                 Transaction.States.Settled
             ])
         ])
+
+
+class BillingDocumentBase(AbstractBillingDocumentBase):
+    pass
 
 
 def create_transaction_for_document(document):
