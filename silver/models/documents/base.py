@@ -175,6 +175,7 @@ class AbstractBillingDocumentBase(models.Model):
     _document_entries = None
 
     class Meta:
+        abstract = True
         unique_together = ('kind', 'provider', 'series', 'number')
         ordering = ('-issue_date', 'series', '-number')
 
