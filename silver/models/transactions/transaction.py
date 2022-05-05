@@ -147,18 +147,21 @@ class AbstractTransaction(models.Model):
 
     @transaction.atomic()
     def save(self, *args, **kwargs):
-        previous_instance = get_object_or_None(Transaction, pk=self.pk) if self.pk else None
+        transaction = kwargs.pop('transaction_model')
+        proforma = kwargs.pop('proforma_model')
+        invoice = kwargs.pop('invoice_model')
+        previous_instance = get_object_or_None(transaction, pk=self.pk) if self.pk else None
         setattr(self, 'previous_instance', previous_instance)
 
         if not previous_instance:
             # Creating a new Transaction so we lock the DB rows for related billing documents and
             # transactions
             if self.proforma:
-                Proforma.objects.select_for_update().filter(pk=self.proforma.pk)
+                proforma.objects.select_for_update().filter(pk=self.proforma.pk)
             elif self.invoice:
-                Invoice.objects.select_for_update().filter(pk=self.invoice.pk)
+                invoice.objects.select_for_update().filter(pk=self.invoice.pk)
 
-            Transaction.objects.select_for_update().filter(Q(proforma=self.proforma) |
+            transaction.objects.select_for_update().filter(Q(proforma=self.proforma) |
                                                            Q(invoice=self.invoice))
 
         if not getattr(self, '.cleaned', False):
