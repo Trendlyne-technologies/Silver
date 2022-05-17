@@ -80,9 +80,9 @@ class AbstractTransaction(models.Model):
     state = FSMField(max_length=8, choices=States.as_choices(),
                      default=States.Initial)
 
-    proforma = models.ForeignKey("BillingDocumentBase", null=True, blank=True,
+    proforma = models.ForeignKey("Proforma", null=True, blank=True,
                                  related_name='proforma_transactions', on_delete=models.CASCADE)
-    invoice = models.ForeignKey("BillingDocumentBase", null=True, blank=True,
+    invoice = models.ForeignKey("Invoice", null=True, blank=True,
                                 related_name='invoice_transactions', on_delete=models.CASCADE)
 
     payment_method = models.ForeignKey('PaymentMethod', on_delete=models.CASCADE)
@@ -147,21 +147,20 @@ class AbstractTransaction(models.Model):
 
     @transaction.atomic()
     def save(self, *args, **kwargs):
-        transaction = kwargs.pop('transaction_model')
-        proforma = kwargs.pop('proforma_model')
-        invoice = kwargs.pop('invoice_model')
-        previous_instance = get_object_or_None(transaction, pk=self.pk) if self.pk else None
+        previous_instance = get_object_or_None(self._meta.model, pk=self.pk) if self.pk else None
         setattr(self, 'previous_instance', previous_instance)
 
         if not previous_instance:
             # Creating a new Transaction so we lock the DB rows for related billing documents and
             # transactions
             if self.proforma:
-                proforma.objects.select_for_update().filter(pk=self.proforma.pk)
+                proforma_model = self._meta.get_field("proforma").related_model
+                proforma_model.objects.select_for_update().filter(pk=self.proforma.pk)
             elif self.invoice:
-                invoice.objects.select_for_update().filter(pk=self.invoice.pk)
+                invoice_model = self._meta.get_field("invoice").related_model
+                invoice_model.objects.select_for_update().filter(pk=self.invoice.pk)
 
-            transaction.objects.select_for_update().filter(Q(proforma=self.proforma) |
+            self._meta.model.objects.select_for_update().filter(Q(proforma=self.proforma) |
                                                            Q(invoice=self.invoice))
 
         if not getattr(self, '.cleaned', False):

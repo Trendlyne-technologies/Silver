@@ -336,7 +336,6 @@ class AbstractBillingDocumentBase(models.Model):
             raise ValidationError({'transaction_currency': message})
 
     def save(self, *args, **kwargs):
-        pdf_model = kwargs.pop('pdf_model')
         if not self.transaction_currency:
             self.transaction_currency = self.customer.currency or self.currency
 
@@ -358,6 +357,7 @@ class AbstractBillingDocumentBase(models.Model):
         with db_transaction.atomic():
             # Create pdf object
             if not self.pdf and self.state != self.STATES.DRAFT:
+                pdf_model = self._meta.get_field("pdf").related_model
                 self.pdf = pdf_model.objects.create(upload_path=self.get_pdf_upload_path(), dirty=1)
 
             super(AbstractBillingDocumentBase, self).save(*args, **kwargs)
@@ -653,7 +653,10 @@ def post_document_save(sender, instance, created=False, **kwargs):
                        AbstractTransaction.States.Initial,
                        AbstractTransaction.States.Settled]
         ):
-            document.create_transaction_for_document()
+            if hasattr(document, "create_transaction_for_document"):
+                document.create_transaction_for_document()
+            else:
+                create_transaction_for_document(document)
 
     # Generate a PDF
     document.mark_for_generation()
