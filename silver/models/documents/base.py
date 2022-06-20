@@ -432,12 +432,10 @@ class AbstractBillingDocumentBase(models.Model):
         #
         # which is obviously false.
         document_type_name = self.__class__.__name__  # Invoice or Proforma
-        kwargs = {document_type_name.lower(): self}
-        entries = DocumentEntry.objects.filter(**kwargs)
-        for entry in entries:
-            if document_type_name.lower() == 'invoice':
+        for entry in self.entries:
+            if 'invoice' in document_type_name.lower():
                 entry.invoice = self
-            if document_type_name.lower() == 'proforma':
+            if 'proforma' in document_type_name.lower():
                 entry.proforma = self
             yield(entry)
 

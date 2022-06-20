@@ -540,11 +540,12 @@ class AbstractSubscription(models.Model):
             return None
 
     def _should_activate_with_free_trial(self):
-        return Subscription.objects.filter(
+        subscription_model = self._meta.model
+        return subscription_model.objects.filter(
             plan__provider=self.plan.provider,
             customer=self.customer,
-            state__in=[Subscription.STATES.ACTIVE, Subscription.STATES.CANCELED,
-                       Subscription.STATES.ENDED]
+            state__in=[subscription_model.STATES.ACTIVE, subscription_model.STATES.CANCELED,
+                       subscription_model.STATES.ENDED]
         ).count() == 0
 
     ##########################################################################
