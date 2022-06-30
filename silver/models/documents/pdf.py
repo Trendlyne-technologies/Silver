@@ -25,7 +25,7 @@ def get_upload_path(instance, filename):
     return instance.upload_path
 
 
-class PDF(Model):
+class AbstractPDF(Model):
     uuid = UUIDField(default=uuid.uuid4, unique=True)
     pdf_file = FileField(null=True, blank=True, editable=False,
                          storage=get_storage(), upload_to=get_upload_path)
@@ -58,14 +58,23 @@ class PDF(Model):
     def upload(self, pdf_file_object, filename):
         # the PDF's upload_path attribute needs to be set before calling this method
 
-        pdf_content = ContentFile(pdf_file_object)
+        pdf_content = ContentFile(pdf_file_object.content)
 
         self.pdf_file.save(filename, pdf_content, True)
 
     def mark_as_dirty(self):
         with transaction.atomic():
-            PDF.objects.filter(id=self.id).update(dirty=F('dirty') + 1)
-            self.refresh_from_db(fields=['dirty'])
+            # PDF.objects.filter(id=self.id).update(dirty=F('dirty') + 1)
+            #self.refresh_from_db(fields=['dirty'])
+            self.dirty = self.dirty + 1
+            self.save()
 
     def mark_as_clean(self):
         PDF.objects.filter(id=self.id).update(dirty=F('dirty') - self.dirty)
+
+    class Meta:
+        abstract = True
+
+
+class PDF(AbstractPDF):
+    pass

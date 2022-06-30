@@ -33,7 +33,8 @@ from django.core.exceptions import ValidationError
 from django.db import connections
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import ChoiceField
-from django.utils.html import escape
+from django.utils.html import escape, format_html
+from django.utils.safestring import mark_safe
 from django_fsm import TransitionNotAllowed
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -59,9 +60,9 @@ def metadata(obj):
     d = u'(None)'
     if obj.meta:
         d = u''
-        for key, value in obj.meta.iteritems():
+        for key, value in obj.meta.items():
             d += u'%s: <code>%s</code><br>' % (escape(key), escape(value))
-    return d
+    return mark_safe(d)
 metadata.allow_tags = True
 
 
@@ -137,7 +138,7 @@ class PlanAdmin(ModelAdmin):
             if f.included_units > 0:
                 d += u'<code> ({:.2f} included)</code>'.format(f.included_units)
             d += u'<br>'
-        return d
+        return format_html(d)
     description.allow_tags = True
 
 
@@ -155,7 +156,7 @@ class MeteredFeatureUnitsLogInLine(TabularInline):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'metered_feature' and hasattr(self, 'parent_obj'):
             if self.parent_obj:
-                kwargs['queryset'] = db_field.rel.to.objects.filter(**{
+                kwargs['queryset'] = db_field.related_model.objects.filter(**{
                     'plan': self.parent_obj.plan
                 })
         return super(MeteredFeatureUnitsLogInLine,
@@ -171,19 +172,19 @@ class BillingLogInLine(TabularInline):
     verbose_name = 'Automatic billing log'
     verbose_name_plural = verbose_name
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request, obj=None):
         return False
 
     def has_delete_permission(self, request, obj=None):
         return False
 
     def invoice_link(self, obj):
-        return obj.invoice.admin_change_url if obj.invoice else 'None'
+        return format_html(obj.invoice.admin_change_url) if obj.invoice else 'None'
     invoice_link.short_description = 'Invoice'
     invoice_link.allow_tags = True
 
     def proforma_link(self, obj):
-        return obj.proforma.admin_change_url if obj.proforma else 'None'
+        return format_html(obj.proforma.admin_change_url) if obj.proforma else 'None'
     proforma_link.short_description = 'Proforma'
     proforma_link.allow_tags = True
 
@@ -221,7 +222,7 @@ class SubscriptionAdmin(ModelAdmin):
                     user_id=request.user.id,
                     content_type_id=ContentType.objects.get_for_model(entry).pk,
                     object_id=entry.id,
-                    object_repr=unicode(entry),
+                    object_repr=str(entry),
                     action_flag=CHANGE,
                     change_message='{action} action initiated by user.'.format(
                         action=action.replace('_', ' ').strip().capitalize()
@@ -271,7 +272,7 @@ class CustomerAdmin(LiveModelAdmin):
               'zip_code', 'country', 'currency', 'consolidated_billing',
               'payment_due_days', 'sales_tax_name', 'sales_tax_percent',
               'sales_tax_number', 'extra', 'meta']
-    list_display = ['__unicode__', 'customer_reference',
+    list_display = ['__str__', 'customer_reference',
                     tax, 'consolidated_billing', metadata]
     search_fields = ['customer_reference', 'first_name', 'last_name', 'company',
                      'address_1', 'address_2', 'city', 'zip_code', 'country',
@@ -330,7 +331,7 @@ class ProviderAdmin(LiveModelAdmin):
               'proforma_starting_number', 'default_document_state',
               'generate_documents_on_trial_end', 'separate_cycles_during_trial', 'prebill_plan',
               'cycle_billing_duration', 'extra', 'meta']
-    list_display = ['__unicode__', 'invoice_series_list_display',
+    list_display = ['__str__', 'invoice_series_list_display',
                     'proforma_series_list_display', metadata]
     search_fields = ['customer_reference', 'name', 'company', 'address_1',
                      'address_2', 'city', 'zip_code', 'country', 'state',
@@ -646,7 +647,7 @@ class BillingDocumentAdmin(ModelAdmin):
                     user_id=request.user.id,
                     content_type_id=ContentType.objects.get_for_model(entry).pk,
                     object_id=entry.id,
-                    object_repr=unicode(entry),
+                    object_repr=str(entry),
                     action_flag=CHANGE,
                     change_message='{action} action initiated by user.'.format(
                         action=readable_action
@@ -779,7 +780,7 @@ class BillingDocumentAdmin(ModelAdmin):
     download_selected_documents.short_description = 'Download selected documents'
 
     def get_related_document(self, obj):
-        return obj.related_document.admin_change_url if obj.related_document else None
+        return format_html(obj.related_document.admin_change_url) if obj.related_document else None
     get_related_document.short_description = 'Related document'
     get_related_document.allow_tags = True
 
@@ -817,8 +818,8 @@ class InvoiceAdmin(BillingDocumentAdmin):
 
     def invoice_pdf(self, invoice):
         if invoice.pdf:
-            url = reverse('invoice-pdf', kwargs={'invoice_id': invoice.id})
-            return '<a href="{url}" target="_blank">{url}</a>'.format(url=url)
+            url = reverse('silver:invoice-pdf', kwargs={'invoice_id': invoice.id})
+            return format_html('<a href="{url}" target="_blank">{url}</a>'.format(url=url))
         else:
             return None
     invoice_pdf.allow_tags = True
@@ -870,8 +871,8 @@ class ProformaAdmin(BillingDocumentAdmin):
 
     def proforma_pdf(self, proforma):
         if proforma.pdf:
-            url = reverse('proforma-pdf', kwargs={'proforma_id': proforma.id})
-            return '<a href="{url}" target="_blank">{url}</a>'.format(url=url)
+            url = reverse('silver:proforma-pdf', kwargs={'proforma_id': proforma.id})
+            return format_html('<a href="{url}" target="_blank">{url}</a>'.format(url=url))
         else:
             return None
     proforma_pdf.allow_tags = True
@@ -934,7 +935,7 @@ class TransactionForm(forms.ModelForm):
 class TransactionAdmin(ModelAdmin):
     form = TransactionForm
 
-    list_display = ('__unicode__', 'external_reference', 'related_invoice', 'related_proforma',
+    list_display = ('__str__', 'external_reference', 'related_invoice', 'related_proforma',
                     'amount', 'state', 'created_at', 'updated_at',
                     'get_customer', 'get_pay_url', 'get_payment_method',
                     'get_is_recurring')
@@ -956,8 +957,8 @@ class TransactionAdmin(ModelAdmin):
         return self.form.Meta.readonly_fields
 
     def get_pay_url(self, obj):
-        return u'<a href="%s">%s</a>' % (get_payment_url(obj, None),
-                                         obj.payment_processor)
+        return format_html('<a href="%s">%s</a>' % (get_payment_url(obj, None),
+                                         obj.payment_processor))
 
     get_pay_url.allow_tags = True
     get_pay_url.short_description = 'Pay URL'
@@ -965,7 +966,7 @@ class TransactionAdmin(ModelAdmin):
     def get_customer(self, obj):
         link = reverse("admin:silver_customer_change",
                                     args=[obj.payment_method.customer.pk])
-        return u'<a href="%s">%s</a>' % (link, obj.payment_method.customer)
+        return format_html('<a href="%s">%s</a>' % (link, obj.payment_method.customer))
     get_customer.allow_tags = True
     get_customer.short_description = 'Customer'
 
@@ -977,7 +978,7 @@ class TransactionAdmin(ModelAdmin):
     def get_payment_method(self, obj):
         link = reverse("admin:silver_paymentmethod_change",
                                     args=[obj.payment_method.pk])
-        return u'<a href="%s">%s</a>' % (link, obj.payment_method)
+        return format_html('<a href="%s">%s</a>' % (link, obj.payment_method))
     get_payment_method.allow_tags = True
     get_payment_method.short_description = 'Payment Method'
 
@@ -1097,12 +1098,12 @@ class TransactionAdmin(ModelAdmin):
     fail.short_description = 'Fail the selected transactions'
 
     def related_invoice(self, obj):
-        return obj.invoice.admin_change_url if obj.invoice else None
+        return format_html(obj.invoice.admin_change_url) if obj.invoice else None
     related_invoice.allow_tags = True
     related_invoice.short_description = 'Invoice'
 
     def related_proforma(self, obj):
-        return obj.proforma.admin_change_url if obj.proforma else None
+        return format_html(obj.proforma.admin_change_url) if obj.proforma else None
     related_proforma.allow_tags = True
     related_proforma.short_description = 'Proforma'
 

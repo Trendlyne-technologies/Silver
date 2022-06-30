@@ -40,7 +40,7 @@ from .codes import FAIL_CODES, REFUND_CODES, CANCEL_CODES
 logger = logging.getLogger(__name__)
 
 
-class Transaction(models.Model):
+class AbstractTransaction(models.Model):
     _provider = None
 
     amount = models.DecimalField(
@@ -54,6 +54,7 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ['-id']
+        abstract = True
 
     class States:
         Initial = 'initial'
@@ -79,9 +80,9 @@ class Transaction(models.Model):
     state = FSMField(max_length=8, choices=States.as_choices(),
                      default=States.Initial)
 
-    proforma = models.ForeignKey("BillingDocumentBase", null=True, blank=True,
+    proforma = models.ForeignKey("Proforma", null=True, blank=True,
                                  related_name='proforma_transactions', on_delete=models.CASCADE)
-    invoice = models.ForeignKey("BillingDocumentBase", null=True, blank=True,
+    invoice = models.ForeignKey("Invoice", null=True, blank=True,
                                 related_name='invoice_transactions', on_delete=models.CASCADE)
 
     payment_method = models.ForeignKey('PaymentMethod', on_delete=models.CASCADE)
@@ -116,7 +117,7 @@ class Transaction(models.Model):
     def __init__(self, *args, **kwargs):
         self.form_class = kwargs.pop('form_class', None)
 
-        super(Transaction, self).__init__(*args, **kwargs)
+        super(AbstractTransaction, self).__init__(*args, **kwargs)
 
     @transition(field=state, source=States.Initial, target=States.Pending)
     def process(self):
@@ -146,24 +147,26 @@ class Transaction(models.Model):
 
     @transaction.atomic()
     def save(self, *args, **kwargs):
-        previous_instance = get_object_or_None(Transaction, pk=self.pk) if self.pk else None
+        previous_instance = get_object_or_None(self._meta.model, pk=self.pk) if self.pk else None
         setattr(self, 'previous_instance', previous_instance)
 
         if not previous_instance:
             # Creating a new Transaction so we lock the DB rows for related billing documents and
             # transactions
             if self.proforma:
-                Proforma.objects.select_for_update().filter(pk=self.proforma.pk)
+                proforma_model = self._meta.get_field("proforma").related_model
+                proforma_model.objects.select_for_update().filter(pk=self.proforma.pk)
             elif self.invoice:
-                Invoice.objects.select_for_update().filter(pk=self.invoice.pk)
+                invoice_model = self._meta.get_field("invoice").related_model
+                invoice_model.objects.select_for_update().filter(pk=self.invoice.pk)
 
-            Transaction.objects.select_for_update().filter(Q(proforma=self.proforma) |
+            self._meta.model.objects.select_for_update().filter(Q(proforma=self.proforma) |
                                                            Q(invoice=self.invoice))
 
         if not getattr(self, '.cleaned', False):
             self.full_clean(previous_instance=previous_instance)
 
-        super(Transaction, self).save(*args, **kwargs)
+        super(AbstractTransaction, self).save(*args, **kwargs)
 
     def clean(self):
         # Validate documents
@@ -241,7 +244,7 @@ class Transaction(models.Model):
 
         previous_instance = kwargs.pop('previous_instance', None)
 
-        super(Transaction, self).full_clean(*args, **kwargs)
+        super(AbstractTransaction, self).full_clean(*args, **kwargs)
 
         self.clean_with_previous_instance(previous_instance)
 
@@ -295,8 +298,12 @@ class Transaction(models.Model):
                 not self.document.amount_to_be_charged_in_transaction_currency):
             self.document.pay()
 
-    def __unicode__(self):
-        return unicode(self.uuid)
+    def __str__(self):
+        return str(self.uuid)
+
+
+class Transaction(AbstractTransaction):
+    pass
 
 
 @receiver(post_transition)

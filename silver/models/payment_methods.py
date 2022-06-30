@@ -37,7 +37,7 @@ class PaymentMethodInvalid(Exception):
     pass
 
 
-class PaymentMethod(models.Model):
+class AbstractPaymentMethod(models.Model):
     class PaymentProcessors:
         @classmethod
         def as_choices(cls):
@@ -64,6 +64,7 @@ class PaymentMethod(models.Model):
 
     class Meta:
         ordering = ['-id']
+        abstract = True
 
     @property
     def final_fields(self):
@@ -74,7 +75,7 @@ class PaymentMethod(models.Model):
         return ['verified', 'canceled']
 
     def __init__(self, *args, **kwargs):
-        super(PaymentMethod, self).__init__(*args, **kwargs)
+        super(AbstractPaymentMethod, self).__init__(*args, **kwargs)
 
         if self.id:
             try:
@@ -96,7 +97,7 @@ class PaymentMethod(models.Model):
         if not self.state == self.States.Uninitialized:
             self.remove()
 
-        super(PaymentMethod, self).delete(using=using)
+        super(AbstractPaymentMethod, self).delete(using=using)
 
     def encrypt_data(self, data):
         key = settings.PAYMENT_METHOD_SECRET
@@ -168,7 +169,7 @@ class PaymentMethod(models.Model):
     def full_clean(self, *args, **kwargs):
         previous_instance = kwargs.pop('previous_instance', None)
 
-        super(PaymentMethod, self).full_clean(*args, **kwargs)
+        super(AbstractPaymentMethod, self).full_clean(*args, **kwargs)
         self.clean_with_previous_instance(previous_instance)
 
         # this assumes that nobody calls clean and then modifies this object
@@ -183,9 +184,13 @@ class PaymentMethod(models.Model):
     def public_data(self):
         return {}
 
-    def __unicode__(self):
+    def __str__(self):
         return u'{} - {}'.format(self.customer,
                                  self.get_payment_processor_display())
+
+
+class PaymentMethod(AbstractPaymentMethod):
+    pass
 
 
 def create_transactions_for_issued_documents(payment_method):

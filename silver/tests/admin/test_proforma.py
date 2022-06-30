@@ -72,7 +72,7 @@ class ProformaAdminTestCase(TestCase):
                     user_id=self.user.pk,
                     content_type_id=ContentType.objects.get_for_model(proforma).pk,
                     object_id=proforma.pk,
-                    object_repr=unicode(proforma),
+                    object_repr=str(proforma),
                     action_flag=CHANGE,
                     change_message='{action} action initiated by user.'.format(
                         action=action.capitalize().replace('_', ' ')

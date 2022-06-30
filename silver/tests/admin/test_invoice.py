@@ -71,7 +71,7 @@ class InvoiceAdminTestCase(TestCase):
                     user_id=self.user.pk,
                     content_type_id=ContentType.objects.get_for_model(invoice).pk,
                     object_id=invoice.pk,
-                    object_repr=unicode(invoice),
+                    object_repr=str(invoice),
                     action_flag=CHANGE,
                     change_message='{action} action initiated by user.'.format(
                         action=action.capitalize().replace('_', ' ')

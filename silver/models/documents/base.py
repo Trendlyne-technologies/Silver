@@ -14,6 +14,7 @@
 
 
 import logging
+from abc import ABC
 from decimal import Decimal
 from datetime import datetime, timedelta
 
@@ -59,7 +60,7 @@ logger = logging.getLogger(__name__)
 
 def documents_pdf_path(document, filename):
     path = '{prefix}{company}/{doc_name}/{date}/{filename}'.format(
-        company=slugify(unicode(
+        company=slugify(str(
             document.provider.company or document.provider.name)),
         date=document.issue_date.strftime('%Y/%m'),
         doc_name=('%ss' % document.__class__.__name__).lower(),
@@ -71,25 +72,25 @@ def documents_pdf_path(document, filename):
 class BillingDocumentQuerySet(models.QuerySet):
     def due_this_month(self):
         return self.filter(
-            state=BillingDocumentBase.STATES.ISSUED,
+            state=AbstractBillingDocumentBase.STATES.ISSUED,
             due_date__gte=datetime.now(pytz.utc).date().replace(day=1)
         )
 
     def due_today(self):
         return self.filter(
-            state=BillingDocumentBase.STATES.ISSUED,
+            state=AbstractBillingDocumentBase.STATES.ISSUED,
             due_date__exact=datetime.now(pytz.utc).date()
         )
 
     def overdue(self):
         return self.filter(
-            state=BillingDocumentBase.STATES.ISSUED,
+            state=AbstractBillingDocumentBase.STATES.ISSUED,
             due_date__lt=datetime.now(pytz.utc).date()
         )
 
     def overdue_since_last_month(self):
         return self.filter(
-            state=BillingDocumentBase.STATES.ISSUED,
+            state=AbstractBillingDocumentBase.STATES.ISSUED,
             due_date__lt=datetime.now(pytz.utc).date().replace(day=1)
         )
 
@@ -103,10 +104,10 @@ class BillingDocumentManager(models.Manager):
 
 def get_billing_documents_kinds():
     return ((subclass.__name__.lower(), subclass.__name__)
-            for subclass in BillingDocumentBase.__subclasses__())
+            for subclass in AbstractBillingDocumentBase.__subclasses__())
 
 
-class BillingDocumentBase(models.Model):
+class AbstractBillingDocumentBase(models.Model):
     objects = BillingDocumentManager.from_queryset(BillingDocumentQuerySet)()
 
     class STATES(object):
@@ -174,16 +175,17 @@ class BillingDocumentBase(models.Model):
     _document_entries = None
 
     class Meta:
+        abstract = True
         unique_together = ('kind', 'provider', 'series', 'number')
         ordering = ('-issue_date', 'series', '-number')
 
     def __init__(self, *args, **kwargs):
-        super(BillingDocumentBase, self).__init__(*args, **kwargs)
+        super(AbstractBillingDocumentBase, self).__init__(*args, **kwargs)
 
         if not self.kind:
             self.kind = self.__class__.__name__.lower()
         else:
-            for subclass in BillingDocumentBase.__subclasses__():
+            for subclass in AbstractBillingDocumentBase.__subclasses__():
                 if subclass.__name__.lower() == self.kind:
                     self.__class__ = subclass
 
@@ -271,9 +273,9 @@ class BillingDocumentBase(models.Model):
     def sync_related_document_state(self):
         if self.related_document and self.state != self.related_document.state:
             state_transition_map = {
-                BillingDocumentBase.STATES.ISSUED: 'issue',
-                BillingDocumentBase.STATES.CANCELED: 'cancel',
-                BillingDocumentBase.STATES.PAID: 'pay'
+                AbstractBillingDocumentBase.STATES.ISSUED: 'issue',
+                AbstractBillingDocumentBase.STATES.CANCELED: 'cancel',
+                AbstractBillingDocumentBase.STATES.PAID: 'pay'
             }
             transition_name = state_transition_map[self.state]
 
@@ -304,7 +306,7 @@ class BillingDocumentBase(models.Model):
         return clone
 
     def clean(self):
-        super(BillingDocumentBase, self).clean()
+        super(AbstractBillingDocumentBase, self).clean()
 
         # The only change that is allowed if the document is in issued state
         # is the state chage from issued to paid
@@ -341,7 +343,7 @@ class BillingDocumentBase(models.Model):
             self.series = self.default_series
 
         # Generate the number
-        if not self.number and self.state != BillingDocumentBase.STATES.DRAFT:
+        if not self.number and self.state != AbstractBillingDocumentBase.STATES.DRAFT:
             self.number = self._generate_number()
 
         # Add tax info
@@ -355,9 +357,10 @@ class BillingDocumentBase(models.Model):
         with db_transaction.atomic():
             # Create pdf object
             if not self.pdf and self.state != self.STATES.DRAFT:
-                self.pdf = PDF.objects.create(upload_path=self.get_pdf_upload_path(), dirty=1)
+                pdf_model = self._meta.get_field("pdf").related_model
+                self.pdf = pdf_model.objects.create(upload_path=self.get_pdf_upload_path(), dirty=1)
 
-            super(BillingDocumentBase, self).save(*args, **kwargs)
+            super(AbstractBillingDocumentBase, self).save(*args, **kwargs)
 
     def _generate_number(self, default_starting_number=1):
         """Generates the number for a proforma/invoice."""
@@ -398,8 +401,8 @@ class BillingDocumentBase(models.Model):
     series_number.short_description = 'Number'
     series_number = property(series_number)
 
-    def __unicode__(self):
-        return u'%s %s => %s [%.2f %s]' % (self.series_number,
+    def __str__(self):
+        return '%s %s => %s [%.2f %s]' % (self.series_number,
                                            self.provider.billing_name,
                                            self.customer.billing_name,
                                            self.total, self.currency)
@@ -429,12 +432,10 @@ class BillingDocumentBase(models.Model):
         #
         # which is obviously false.
         document_type_name = self.__class__.__name__  # Invoice or Proforma
-        kwargs = {document_type_name.lower(): self}
-        entries = DocumentEntry.objects.filter(**kwargs)
-        for entry in entries:
-            if document_type_name.lower() == 'invoice':
+        for entry in self.entries:
+            if 'invoice' in document_type_name.lower():
                 entry.invoice = self
-            if document_type_name.lower() == 'proforma':
+            if 'proforma' in document_type_name.lower():
                 entry.proforma = self
             yield(entry)
 
@@ -588,6 +589,10 @@ class BillingDocumentBase(models.Model):
         ])
 
 
+class BillingDocumentBase(AbstractBillingDocumentBase):
+    pass
+
+
 def create_transaction_for_document(document):
     # get a usable, recurring payment_method for the customer
     PaymentMethod = apps.get_model('silver.PaymentMethod')
@@ -608,7 +613,7 @@ def create_transaction_for_document(document):
 
 @receiver(post_transition)
 def post_transition_callback(sender, instance, name, source, target, **kwargs):
-    if not isinstance(instance, BillingDocumentBase):
+    if not isinstance(instance, AbstractBillingDocumentBase):
         return
 
     document = instance
@@ -619,7 +624,8 @@ def post_transition_callback(sender, instance, name, source, target, **kwargs):
 
 @receiver(post_save)
 def post_document_save(sender, instance, created=False, **kwargs):
-    if not isinstance(instance, BillingDocumentBase):
+
+    if not isinstance(instance, AbstractBillingDocumentBase):
         return
 
     document = instance
@@ -634,18 +640,21 @@ def post_document_save(sender, instance, created=False, **kwargs):
     document.sync_related_document_state()
 
     # Create a transaction if the document was recently issued
-    if (document.state == BillingDocumentBase.STATES.ISSUED and
+    if (document.state == AbstractBillingDocumentBase.STATES.ISSUED and
             settings.SILVER_AUTOMATICALLY_CREATE_TRANSACTIONS):
         # But only if there is no pending transaction
-        Transaction = apps.get_model('silver', 'Transaction')
-
+        # Transaction = apps.get_model('silver', 'Transaction')
+        from silver.models.transactions.transaction import AbstractTransaction
         # The related document might have the only reference to an existing transaction
         if not (document.related_document or document).transactions.filter(
-            state__in=[Transaction.States.Pending,
-                       Transaction.States.Initial,
-                       Transaction.States.Settled]
+            state__in=[AbstractTransaction.States.Pending,
+                       AbstractTransaction.States.Initial,
+                       AbstractTransaction.States.Settled]
         ):
-            create_transaction_for_document(document)
+            if hasattr(document, "create_transaction_for_document"):
+                document.create_transaction_for_document()
+            else:
+                create_transaction_for_document(document)
 
     # Generate a PDF
     document.mark_for_generation()

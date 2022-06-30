@@ -15,8 +15,15 @@
 from django.db import models
 
 
-class ProductCode(models.Model):
+class AbstractProductCode(models.Model):
     value = models.CharField(max_length=128, unique=True)
 
-    def __unicode__(self):
-        return unicode(self.value)
+    def __str__(self):
+        return str(self.value)
+
+    class Meta:
+        abstract = True
+
+
+class ProductCode(AbstractProductCode):
+    pass
