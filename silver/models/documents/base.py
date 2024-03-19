@@ -236,7 +236,7 @@ class AbstractBillingDocumentBase(models.Model):
 
         if not self.sales_tax_name:
             self.sales_tax_name = self.customer.sales_tax_name
-        if not self.sales_tax_percent:
+        if self.sales_tax_percent is None:
             self.sales_tax_percent = self.customer.sales_tax_percent
 
         if not self.number:
@@ -349,7 +349,7 @@ class AbstractBillingDocumentBase(models.Model):
         # Add tax info
         if not self.sales_tax_name:
             self.sales_tax_name = self.customer.sales_tax_name
-        if not self.sales_tax_percent:
+        if self.sales_tax_percent is None:
             self.sales_tax_percent = self.customer.sales_tax_percent
 
         self._last_state = self.state
