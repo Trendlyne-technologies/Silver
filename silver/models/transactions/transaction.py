@@ -303,7 +303,13 @@ class AbstractTransaction(models.Model):
 
 
 class Transaction(AbstractTransaction):
-    pass
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['uuid']),
+            models.Index(fields=['external_reference']),
+            models.Index(fields=["created_at"]),
+        ]
 
 
 @receiver(post_transition)

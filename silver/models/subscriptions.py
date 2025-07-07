@@ -1008,7 +1008,11 @@ class AbstractSubscription(models.Model):
 
 
 class Subscription(AbstractSubscription):
-    pass
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['reference']),
+        ]
 
 
 class AbstractBillingLog(models.Model):
